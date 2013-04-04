@@ -1,33 +1,31 @@
 #!/usr/bin/env python
 import helper
 from novaclient.v1_1.client import servers
+import time, uuid
 
 
 def main():
-	client = helper.get_client()
-	createServer(client)
+	client = helper.get_client()	
+	for i in range(1,6):
+		createTorqueServer(client)
 	#deleteServer(client)
-	
-def createServer(client=None):
-	servers = client.servers
-	print "Before Server List"
-	print "------------------"
-	listServers(servers)
-	print "------------------"
-	
+	monitorServers(client)
+		
+def createTorqueServer(client=None):
 	image = getImage(client)
 	flavor = getFlavor(client)
-	
-	for i in range(1,6):
-		servers.create("Torque_"+str(i),image, flavor, key_name="minnesota")
-		print "Torque_"+str(i)+" server created."
+	key_name = "minnesota"
+	id = str(uuid.uuid1())
 	
 	servers = client.servers
-	print "After Server List"
-	print "-----------------"
-	listServers(servers)
-	print "-----------------"
-
+	
+	name = "Torque_"+id
+	createServer(servers, name, image, flavor, key_name)
+			
+def createServer(servers=None, name=None, image=None, flavor=None, key_name=None):
+		servers.create(name=name,image=image, flavor=flavor, key_name=key_name)
+		print "Server Created: " + name
+		
 def deleteServer(client=None):
 	# Iterate through all of the servers and delete them
 	servers = client.servers
@@ -53,14 +51,16 @@ def getFlavor(client=None):
 	xsmall = client.flavors.get(100)
 	return xsmall
 	
-def getIPAddress(servers=None):
-	"""docstring for getIPAddress"""
-	serverList = servers.list()
-	
-	
-def pingServer(servers=None):
-	"""docstring for pingServer"""
-	pass
-	
+def monitorServers(client=None):
+	while True:
+		serverList = client.servers.list()
+		serverCount = len(serverList)
+		if serverCount < 5:
+			print "Create a new server"
+			createTorqueServer(client)
+		else:
+			print "Doing nothing"
+		time.sleep(5)
+		
 if __name__ == '__main__':
 	main()
