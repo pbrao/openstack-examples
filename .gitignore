@@ -3,3 +3,5 @@
 *.swp
 *.pem
 *.img
+
+*.pyc
